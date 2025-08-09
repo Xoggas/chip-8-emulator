@@ -4,9 +4,9 @@ A simple emulator of the classic **Chip-8** virtual machine, written in **C#**, 
 
 ## 📷 Screenshots
 
-![Screenshot 1](https://imgur.com/a/jloLpGM)
-![Screenshot 2](https://imgur.com/Gq3rgrK)
-![Screenshot 3](https://imgur.com/LK35pMa)
+![Screenshot 1](Screenshots/3.png)
+![Screenshot 2](Screenshots/1.png)
+![Screenshot 3](Screenshots/2.png)
 
 ## 💾 ROM Support
 
