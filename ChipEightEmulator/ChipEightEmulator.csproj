@@ -17,7 +17,7 @@
         <CopyToOutputDirectory>Never</CopyToOutputDirectory>
       </None>
       <None Update="Roms\pong.ch8">
-        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
     </ItemGroup>
 
