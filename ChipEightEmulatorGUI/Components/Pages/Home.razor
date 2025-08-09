@@ -5,6 +5,7 @@
 @inject RomStorageService RomStorageService
 @inject EmulatorService EmulatorService
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 
 <MudContainer Gutters="false" Class="px-2">
     <MudFileUpload T="IReadOnlyList<IBrowserFile>"
@@ -49,12 +50,11 @@
                 <PropertyColumn Property="x => x.Title" Title="Title"/>
                 <PropertyColumn Property="x => ByteFormatter.FormatBytes(x.Size)" Title="Size"/>
                 <PropertyColumn Property="x => x.PlayedFor.ToString(TimeFormatString)" Title="Played for"/>
-                <TemplateColumn CellClass="d-flex justify-end">
+                <TemplateColumn CellClass="d-flex justify-end align-center">
                     <CellTemplate>
                         <MudStack Row>
                             <MudIconButton Icon="@Icons.Material.Rounded.Delete"
-                                           OnClick="() => DeleteRom(context.Item)"
-                                           aria-label="Delete"/>
+                                           OnClick="() => DeleteRom(context.Item)"/>
 
                             @if (EmulatorService.EmulatorInstances.ContainsKey(context.Item))
                             {
@@ -104,13 +104,19 @@
         ShowSnackbar(files.Count > 1 ? "Uploaded {files.Count} roms!" : $"Uploaded {files.Count} rom!");
     }
 
-    private void DeleteRom(Rom rom)
+    private async Task DeleteRom(Rom rom)
     {
-        RomStorageService.UnregisterRom(rom);
+        var dialog = await DialogService.ShowAsync<RomDeletionDialog>();
+        var result = await dialog.Result;
 
-        InvokeAsync(StateHasChanged);
+        if (result?.Canceled is false)
+        {
+            RomStorageService.UnregisterRom(rom);
 
-        ShowSnackbar("Deleted the rom!");
+            await InvokeAsync(StateHasChanged);
+
+            ShowSnackbar("Deleted the rom!");
+        }
     }
 
     private void PlayRom(Rom rom)
@@ -150,4 +156,5 @@
 
     private Func<Rom, bool> Filter => x => string.IsNullOrWhiteSpace(_searchString) ||
                                            x.Title.Contains(_searchString, StringComparison.OrdinalIgnoreCase);
+
 }
