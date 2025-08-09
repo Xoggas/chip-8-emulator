@@ -19,49 +19,67 @@
             </MudButton>
         </ActivatorContent>
     </MudFileUpload>
-    <MudStack Style="gap: 8px">
-        @if (RomStorageService.Roms.Count == 0)
-        {
-            <MudPaper Class="pa-4 d-flex justify-center flex-column" Outlined="true">
-                <MudText Typo="Typo.body1" Align="Align.Center">
-                    The ROM list is empty!
-                </MudText>
-            </MudPaper>
-        }
-        else
-        {
-            <MudDataGrid Items="@RomStorageService.Roms">
-                <Columns>
-                    <PropertyColumn Property="x => x.Title" Title="Title"/>
-                    <PropertyColumn Property="x => ByteFormatter.FormatBytes(x.Size)"/>
-                    <TemplateColumn CellClass="d-flex justify-end">
-                        <CellTemplate>
-                            <MudStack Row>
-                                <MudIconButton Icon="@Icons.Material.Rounded.Delete"
-                                               OnClick="() => DeleteRom(context.Item)"
-                                               aria-label="Delete"/>
 
-                                @if (EmulatorService.Processes.ContainsKey(context.Item))
-                                {
-                                    <MudIconButton Icon="@Icons.Material.Rounded.Stop"
-                                                   OnClick="() => StopRom(context.Item)"/>
-                                }
-                                else
-                                {
-                                    <MudIconButton Icon="@Icons.Material.Rounded.PlayArrow"
-                                                   OnClick="() => PlayRom(context.Item)"/>
-                                }
-                            </MudStack>
-                        </CellTemplate>
-                    </TemplateColumn>
-                </Columns>
-            </MudDataGrid>
-        }
-    </MudStack>
+    @if (RomStorageService.Roms.Count == 0)
+    {
+        <MudPaper Class="pa-4 d-flex justify-center flex-column" Outlined="true">
+            <MudText Typo="Typo.body1" Align="Align.Center">
+                The ROM list is empty!
+            </MudText>
+        </MudPaper>
+    }
+    else
+    {
+        <MudDataGrid T="Rom"
+                     Items="@RomStorageService.Roms"
+                     QuickFilter="@Filter">
+            <ToolBarContent>
+                <MudText Typo="Typo.h6">Loaded ROMs</MudText>
+                <MudSpacer/>
+                <MudTextField @bind-Value="_searchString"
+                              Placeholder="Search"
+                              Adornment="Adornment.Start"
+                              Immediate="true"
+                              AdornmentIcon="@Icons.Material.Filled.Search"
+                              IconSize="Size.Medium"
+                              Class="mt-0">
+                </MudTextField>
+            </ToolBarContent>
+            <Columns>
+                <PropertyColumn Property="x => x.Title" Title="Title"/>
+                <PropertyColumn Property="x => ByteFormatter.FormatBytes(x.Size)"/>
+                <TemplateColumn CellClass="d-flex justify-end">
+                    <CellTemplate>
+                        <MudStack Row>
+                            <MudIconButton Icon="@Icons.Material.Rounded.Delete"
+                                           OnClick="() => DeleteRom(context.Item)"
+                                           aria-label="Delete"/>
+
+                            @if (EmulatorService.Processes.ContainsKey(context.Item))
+                            {
+                                <MudIconButton Icon="@Icons.Material.Rounded.Stop"
+                                               OnClick="() => StopRom(context.Item)"/>
+                            }
+                            else
+                            {
+                                <MudIconButton Icon="@Icons.Material.Rounded.PlayArrow"
+                                               OnClick="() => PlayRom(context.Item)"/>
+                            }
+                        </MudStack>
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+            <PagerContent>
+                <MudDataGridPager T="Rom"/>
+            </PagerContent>
+        </MudDataGrid>
+    }
 </MudContainer>
 
 @code
 {
+    private string _searchString = string.Empty;
+
     protected override void OnInitialized()
     {
         RomStorageService.LoadRoms();
@@ -117,4 +135,7 @@
     {
         Snackbar.Add(text, Severity.Info, config => { config.SnackbarVariant = Variant.Outlined; });
     }
+
+    private Func<Rom, bool> Filter => x => string.IsNullOrWhiteSpace(_searchString) ||
+                                           x.Title.Contains(_searchString, StringComparison.OrdinalIgnoreCase);
 }
