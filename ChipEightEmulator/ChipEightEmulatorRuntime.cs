@@ -21,7 +21,7 @@ public static class ChipEightEmulatorRuntime
 
     private static void RunGame(string romPath)
     {
-        Raylib.InitWindow(64 * Scale, 32 * Scale, GetTitleFromRomPath(romPath));
+        Raylib.InitWindow(64 * Scale, 32 * Scale, "Chip-8 Emulator");
 
         var screenTexture = Raylib.LoadTextureFromImage(Raylib.GenImageColor(64, 32, Color.Black));
         var emulator = new Emulator(File.ReadAllBytes(romPath));
@@ -43,11 +43,5 @@ public static class ChipEightEmulatorRuntime
 
         Raylib.UnloadTexture(screenTexture);
         Raylib.CloseWindow();
-    }
-
-    private static string GetTitleFromRomPath(string romPath)
-    {
-        var fileName = Path.GetFileNameWithoutExtension(romPath);
-        return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(fileName);
     }
 }

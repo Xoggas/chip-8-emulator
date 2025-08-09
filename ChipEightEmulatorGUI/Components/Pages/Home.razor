@@ -1,5 +1,120 @@
 ﻿@page "/"
+@using ChipEightEmulatorGUI.Helpers
+@using ChipEightEmulatorGUI.Models
+@using ChipEightEmulatorGUI.Services
+@inject RomStorageService RomStorageService
+@inject EmulatorService EmulatorService
+@inject ISnackbar Snackbar
 
-<h1>Hello, world!</h1>
+<MudContainer Gutters="false" Class="px-2">
+    <MudFileUpload T="IReadOnlyList<IBrowserFile>"
+                   Class="mt-2 mb-2"
+                   Accept=".ch8"
+                   FilesChanged="UploadFiles">
+        <ActivatorContent>
+            <MudButton Variant="Variant.Filled"
+                       StartIcon="@Icons.Material.Rounded.Add"
+                       FullWidth="true">
+                Add ROM
+            </MudButton>
+        </ActivatorContent>
+    </MudFileUpload>
+    <MudStack Style="gap: 8px">
+        @if (RomStorageService.Roms.Count == 0)
+        {
+            <MudPaper Class="pa-4 d-flex justify-center flex-column" Outlined="true">
+                <MudText Typo="Typo.body1" Align="Align.Center">
+                    The ROM list is empty!
+                </MudText>
+            </MudPaper>
+        }
+        else
+        {
+            <MudDataGrid Items="@RomStorageService.Roms">
+                <Columns>
+                    <PropertyColumn Property="x => x.Title" Title="Title"/>
+                    <PropertyColumn Property="x => ByteFormatter.FormatBytes(x.Size)"/>
+                    <TemplateColumn CellClass="d-flex justify-end">
+                        <CellTemplate>
+                            <MudStack Row>
+                                <MudIconButton Icon="@Icons.Material.Rounded.Delete"
+                                               OnClick="() => DeleteRom(context.Item)"
+                                               aria-label="Delete"/>
 
-Welcome to your new app.
+                                @if (EmulatorService.Processes.ContainsKey(context.Item))
+                                {
+                                    <MudIconButton Icon="@Icons.Material.Rounded.Stop"
+                                                   OnClick="() => StopRom(context.Item)"/>
+                                }
+                                else
+                                {
+                                    <MudIconButton Icon="@Icons.Material.Rounded.PlayArrow"
+                                                   OnClick="() => PlayRom(context.Item)"/>
+                                }
+                            </MudStack>
+                        </CellTemplate>
+                    </TemplateColumn>
+                </Columns>
+            </MudDataGrid>
+        }
+    </MudStack>
+</MudContainer>
+
+@code
+{
+    protected override void OnInitialized()
+    {
+        RomStorageService.LoadRoms();
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task UploadFiles(IReadOnlyList<IBrowserFile>? files)
+    {
+        if (files is null)
+        {
+            return;
+        }
+
+        await Task.WhenAll(files.Select(RomStorageService.RegisterRom));
+
+        await InvokeAsync(StateHasChanged);
+
+        ShowSnackbar(files.Count > 1 ? "Uploaded {files.Count} roms!" : $"Uploaded {files.Count} rom!");
+    }
+
+    private void DeleteRom(Rom rom)
+    {
+        RomStorageService.UnregisterRom(rom);
+
+        InvokeAsync(StateHasChanged);
+
+        ShowSnackbar("Deleted the rom!");
+    }
+
+    private void PlayRom(Rom rom)
+    {
+        var process = EmulatorService.RunRom(rom);
+
+        if (process is null)
+        {
+            return;
+        }
+
+        process.Exited += (_, _) => InvokeAsync(StateHasChanged);
+
+        ShowSnackbar($"Running {rom.Title}");
+    }
+
+    private void StopRom(Rom rom)
+    {
+        EmulatorService.StopRom(rom);
+
+        ShowSnackbar($"Stopped {rom.Title}");
+    }
+
+    private void ShowSnackbar(string text)
+    {
+        Snackbar.Add(text, Severity.Info, config => { config.SnackbarVariant = Variant.Outlined; });
+    }
+}

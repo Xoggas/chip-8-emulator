@@ -1,3 +1,16 @@
 ﻿@inherits LayoutComponentBase
 
-@Body
+<MudThemeProvider IsDarkMode="true"/>
+<MudPopoverProvider/>
+<MudDialogProvider/>
+<MudSnackbarProvider/>
+
+<MudLayout>
+    <MudAppBar Elevation="1">
+        <MudText Typo="Typo.h6">Loaded ROMs</MudText>
+        <MudSpacer/>
+    </MudAppBar>
+    <MudMainContent>
+        @Body
+    </MudMainContent>
+</MudLayout>
