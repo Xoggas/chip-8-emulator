@@ -7,7 +7,7 @@ public sealed class EmulatorService
 {
     private const string EmulatorExeName = "ChipEightEmulator.exe";
 
-    private readonly Dictionary<Rom, Process> _processes = [];
+    private readonly Dictionary<Rom, EmulatorInstance> _emulatorInstances = [];
     private readonly RomStorageService _romStorageService;
 
     public EmulatorService(RomStorageService romStorageService)
@@ -15,9 +15,9 @@ public sealed class EmulatorService
         _romStorageService = romStorageService;
     }
 
-    public IReadOnlyDictionary<Rom, Process> Processes => _processes;
+    public IReadOnlyDictionary<Rom, EmulatorInstance> EmulatorInstances => _emulatorInstances;
 
-    public Process? RunRom(Rom rom)
+    public EmulatorInstance? CreateEmulatorInstance(Rom rom)
     {
         var path = _romStorageService.GetRomPath(rom);
 
@@ -35,23 +35,38 @@ public sealed class EmulatorService
             return null;
         }
 
+        var emulatorInstance = new EmulatorInstance(rom, process, DateTime.Now);
+
         process.EnableRaisingEvents = true;
-        process.Exited += (_, _) => UnregisterProcessForRom(rom);
+        process.Exited += (_, _) => OnEmulatorInstanceClosed(emulatorInstance);
 
-        _processes.Add(rom, process);
+        _emulatorInstances.Add(rom, emulatorInstance);
 
-        return process;
+        return emulatorInstance;
     }
 
-    public void StopRom(Rom rom)
+    public void StopEmulatorInstanceForRom(Rom rom)
     {
-        var process = _processes[rom];
-
-        process.Kill();
+        var emulatorInstance = _emulatorInstances[rom];
+        emulatorInstance.Process.Kill();
     }
 
-    private void UnregisterProcessForRom(Rom rom)
+    private void OnEmulatorInstanceClosed(EmulatorInstance emulatorInstance)
     {
-        _processes.Remove(rom);
+        _emulatorInstances.Remove(emulatorInstance.Rom);
+    }
+}
+
+public sealed class EmulatorInstance
+{
+    public Rom Rom { get; }
+    public Process Process { get; }
+    public DateTime OpenedAt { get; }
+
+    public EmulatorInstance(Rom rom, Process process, DateTime openedAt)
+    {
+        Rom = rom;
+        Process = process;
+        OpenedAt = openedAt;
     }
 }

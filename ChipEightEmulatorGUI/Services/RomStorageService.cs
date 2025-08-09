@@ -61,7 +61,7 @@ public sealed class RomStorageService
 
         _roms.Add(rom);
 
-        SaveLoadedRomsList(_roms);
+        SaveRomsMetadata(_roms);
 
         return rom;
     }
@@ -74,10 +74,19 @@ public sealed class RomStorageService
 
         File.Delete(path);
 
-        SaveLoadedRomsList(_roms);
+        SaveRomsMetadata(_roms);
     }
 
-    private void SaveLoadedRomsList(IEnumerable<Rom> roms)
+    public void UpdateRomPlaytime(Rom rom, DateTime openedAt, DateTime closedAt)
+    {
+        var playDuration = closedAt - openedAt;
+
+        rom.PlayedFor += playDuration;
+        
+        SaveRomsMetadata(_roms);
+    }
+
+    private void SaveRomsMetadata(IEnumerable<Rom> roms)
     {
         if (Directory.Exists(DataFolder) is false)
         {

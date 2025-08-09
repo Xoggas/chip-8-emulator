@@ -47,7 +47,8 @@
             </ToolBarContent>
             <Columns>
                 <PropertyColumn Property="x => x.Title" Title="Title"/>
-                <PropertyColumn Property="x => ByteFormatter.FormatBytes(x.Size)"/>
+                <PropertyColumn Property="x => ByteFormatter.FormatBytes(x.Size)" Title="Size"/>
+                <PropertyColumn Property="x => x.PlayedFor.ToString(TimeFormatString)" Title="Played for"/>
                 <TemplateColumn CellClass="d-flex justify-end">
                     <CellTemplate>
                         <MudStack Row>
@@ -55,7 +56,7 @@
                                            OnClick="() => DeleteRom(context.Item)"
                                            aria-label="Delete"/>
 
-                            @if (EmulatorService.Processes.ContainsKey(context.Item))
+                            @if (EmulatorService.EmulatorInstances.ContainsKey(context.Item))
                             {
                                 <MudIconButton Icon="@Icons.Material.Rounded.Stop"
                                                OnClick="() => StopRom(context.Item)"/>
@@ -78,6 +79,8 @@
 
 @code
 {
+    private const string TimeFormatString = @"hh\:mm\:ss";
+
     private string _searchString = string.Empty;
 
     protected override void OnInitialized()
@@ -112,23 +115,32 @@
 
     private void PlayRom(Rom rom)
     {
-        var process = EmulatorService.RunRom(rom);
+        var emulatorInstance = EmulatorService.CreateEmulatorInstance(rom);
 
-        if (process is null)
+        if (emulatorInstance is null)
         {
             return;
         }
 
-        process.Exited += (_, _) => InvokeAsync(StateHasChanged);
+        emulatorInstance.Process.Exited += (_, _) => OnEmulatorInstanceStopped(emulatorInstance);
 
         ShowSnackbar($"Running {rom.Title}");
     }
 
     private void StopRom(Rom rom)
     {
-        EmulatorService.StopRom(rom);
+        EmulatorService.StopEmulatorInstanceForRom(rom);
 
         ShowSnackbar($"Stopped {rom.Title}");
+    }
+
+    private void OnEmulatorInstanceStopped(EmulatorInstance emulatorInstance)
+    {
+        var closedAt = DateTime.Now;
+
+        RomStorageService.UpdateRomPlaytime(emulatorInstance.Rom, emulatorInstance.OpenedAt, closedAt);
+
+        InvokeAsync(StateHasChanged);
     }
 
     private void ShowSnackbar(string text)
