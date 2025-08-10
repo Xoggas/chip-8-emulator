@@ -22,7 +22,7 @@ jobs:
         run: dotnet restore
 
       - name: Build ChipEightEmulatorGUI
-        run: dotnet publish ChipEightEmulatorGUI/ChipEightEmulatorGUI.csproj -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true -f net9.0-windows10.0.19041.0
+        run: dotnet publish ChipEightEmulatorGUI/ChipEightEmulatorGUI.csproj -c Release -r win-x64 -f net9.0-windows10.0.19041.0
 
       - name: Archive build
         run: |
