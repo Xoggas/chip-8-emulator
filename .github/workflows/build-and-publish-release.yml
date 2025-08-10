@@ -28,7 +28,7 @@ jobs:
         run: |
           mkdir release
           $publishDir = Get-ChildItem -Path "ChipEightEmulatorGUI\bin\Release" -Directory -Recurse | Where-Object { $_.Name -eq "publish" } | Select-Object -First 1
-          Copy-Item "$($publishDir.FullName)\*" release\
+          Copy-Item "$($publishDir.FullName)\*" release\ -Recurse -Force
           powershell Compress-Archive -Path release\* -DestinationPath release.zip
       
       - name: Create GitHub Release
