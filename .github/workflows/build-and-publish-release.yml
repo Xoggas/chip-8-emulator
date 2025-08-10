@@ -1,0 +1,38 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*' # Запуск при пуше тегов вида v1.0.0
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.200'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build ChipEightEmulatorGUI
+        run: dotnet publish ChipEightEmulatorGUI/ChipEightEmulatorGUI.csproj -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true
+
+      - name: Archive build
+        run: |
+          mkdir release
+          copy ChipEightEmulatorGUI\bin\Release\net8.0\win-x64\publish\* release\
+          powershell Compress-Archive -Path release\* -DestinationPath release.zip
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
