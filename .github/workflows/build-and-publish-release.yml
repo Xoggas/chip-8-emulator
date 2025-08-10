@@ -27,9 +27,10 @@ jobs:
       - name: Archive build
         run: |
           mkdir release
-          copy ChipEightEmulatorGUI\bin\Release\net9.0-windows10.0.19041.0\publish\* release\
+          $publishDir = Get-ChildItem -Path "ChipEightEmulatorGUI\bin\Release" -Directory -Recurse | Where-Object { $_.Name -eq "publish" } | Select-Object -First 1
+          Copy-Item "$($publishDir.FullName)\*" release\
           powershell Compress-Archive -Path release\* -DestinationPath release.zip
-
+      
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
